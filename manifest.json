@@ -14,7 +14,11 @@
       }
     }
   },
-  "permissions": [ "activeTab" ],
+  "permissions": [ 
+    "<all_urls>",
+    "http://namepredict.com:8080/",
+    "https://en.wikipedia.org/wiki/",
+    "http://localhost/" ],
   "icons": {
     "16": "icon16-999.png",
     "48": "icon48-999.png",

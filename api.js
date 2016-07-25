@@ -165,24 +165,26 @@ window.CaptureAPI = (function() {
     function getBlobs(screenshots) {
         return screenshots.map(function(screenshot) {
             var dataURI = screenshot.canvas.toDataURL();
+            //window.alert(dataURI);
 
-            // convert base64 to raw binary data held in a string
-            // doesn't handle URLEncoded DataURIs
-            var byteString = atob(dataURI.split(',')[1]);
+            // Yuntian: // convert base64 to raw binary data held in a string
+            // Yuntian: // doesn't handle URLEncoded DataURIs
+            // Yuntian: var byteString = atob(dataURI.split(',')[1]);
 
-            // separate out the mime component
-            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            // Yuntian: // separate out the mime component
+            // Yuntian: var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
-            // write the bytes of the string to an ArrayBuffer
-            var ab = new ArrayBuffer(byteString.length);
-            var ia = new Uint8Array(ab);
-            for (var i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
+            // Yuntian: // write the bytes of the string to an ArrayBuffer
+            // Yuntian: var ab = new ArrayBuffer(byteString.length);
+            // Yuntian: var ia = new Uint8Array(ab);
+            // Yuntian: for (var i = 0; i < byteString.length; i++) {
+            // Yuntian:     ia[i] = byteString.charCodeAt(i);
+            // Yuntian: }
 
-            // create a blob for writing to a file
-            var blob = new Blob([ab], {type: mimeString});
-            return blob;
+            // Yuntian: // create a blob for writing to a file
+            // Yuntian: var blob = new Blob([ab], {type: mimeString});
+            // Yuntian: return blob;
+            return dataURI;
         });
     }
 
@@ -288,14 +290,15 @@ window.CaptureAPI = (function() {
             var i = 0,
                 len = blobs.length,
                 filenames = [];
+            callback(blobs);
 
-            (function doNext() {
-                saveBlob(blobs[i], filename, i, function(filename) {
-                    i++;
-                    filenames.push(filename);
-                    i >= len ? callback(filenames) : doNext();
-                }, errback);
-            })();
+            //(function doNext() {
+            //    saveBlob(blobs[i], filename, i, function(filename) {
+            //        i++;
+            //        filenames.push(filename);
+            //        i >= len ? callback(filenames) : doNext();
+            //    }, errback);
+            //})();
         }, errback, progress, splitnotifier);
     }
 

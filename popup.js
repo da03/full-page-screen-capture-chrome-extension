@@ -9,7 +9,8 @@
 var currentTab, // result of chrome.tabs.query of current active tab
     resultWindowId; // window id for putting resulting images
 
-
+var file_id;
+var global_image_uris;
 //
 // Utility methods
 //
@@ -110,13 +111,70 @@ function splitnotifier() {
 //
 // start doing stuff immediately! - including error cases
 //
+if(typeof(String.prototype.trim) === "undefined")
+{
+     String.prototype.trim = function() 
+     {
+          return String(this).replace(/^\s+|\s+$/g, '');
+     };
+}
 
+function sleep (seconds) {
+    var start = new Date().getTime();
+    while (new Date() < start + seconds*1000) {}
+        return 0;
+}
 chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     var tab = tabs[0];
     currentTab = tab; // used in later calls to get tab info
 
-    var filename = getFilename(tab.url);
 
-    CaptureAPI.captureToFiles(tab, filename, displayCaptures,
-                              errorHandler, progress, splitnotifier);
+         jQuery.ajaxSetup({
+             timeout:3600000, // in milliseconds 
+             async: false
+         });
+    jQuery.get('http://localhost/enwiki-1-100.txt', function(txt) {
+        var lines = txt.split("\n");
+        (function doNext(i) {
+            if (i >= lines.length) {
+                return;
+            }
+            var str = lines[i].trim();
+            if (str.length == 0) {
+                doNext(i+1);
+                return;
+            }
+            var items = str.split(":");
+            if (items.length < 3) {
+                doNext(i+1);
+                return;
+            }
+            if (items.length > 3) {
+                for (var j = 3; j < items.length; j++) {
+                    items[2] = items[2] + ":" + items[j];
+                }
+            }
+            file_id = items[0] + '_' + items[1];
+            url = "https://en.wikipedia.org/wiki/" + items[2];
+            console.log(url);
+            jQuery.get(url, function(data) {
+                chrome.tabs.update(currentTab.id, {url: url}, function(tab) {
+                    sleep(2);
+                    var filename = getFilename(tab.url);
+                    CaptureAPI.captureToFiles(tab, filename, function(image_uris) {
+                        global_image_uris = image_uris;
+                        chrome.tabs.executeScript(currentTab.id, {
+                                file: "getPagesSource.js"
+                        }, function() {
+                            window.alert(global_image_uris[0]);
+                            chrome.tabs.sendMessage(currentTab.id, {msg: 'getHTML'}, function(src) {
+                                jQuery.post( "http://localhost/write.php", { file_id: file_id, image_uris: global_image_uris, src:src } , doNext(i+1));
+                            });
+                        });
+                    },
+                    errorHandler, progress, splitnotifier);
+                });
+            }, 'text');
+        })(0);
+    }, 'text');
 });
