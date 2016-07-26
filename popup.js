@@ -166,7 +166,6 @@ chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
                         chrome.tabs.executeScript(currentTab.id, {
                                 file: "getPagesSource.js"
                         }, function() {
-                            window.alert(global_image_uris[0]);
                             chrome.tabs.sendMessage(currentTab.id, {msg: 'getHTML'}, function(src) {
                                 jQuery.post( "http://localhost/write.php", { file_id: file_id, image_uris: global_image_uris, src:src } , doNext(i+1));
                             });

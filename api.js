@@ -5,7 +5,7 @@ window.CaptureAPI = (function() {
         MAX_SECONDARY_DIMENSION = 4000 * 2,
         MAX_AREA = MAX_PRIMARY_DIMENSION * MAX_SECONDARY_DIMENSION;
 
-
+    var listener;
     //
     // URL Matching test - to verify we can talk to this URL
     //
@@ -231,7 +231,7 @@ window.CaptureAPI = (function() {
     function captureToBlobs(tab, callback, errback, progress, splitnotifier) {
         var loaded = false,
             screenshots = [],
-            timeout = 3000,
+            timeout = 6000,
             timedOut = false,
             noop = function() {};
 
@@ -243,8 +243,7 @@ window.CaptureAPI = (function() {
             errback('invalid url'); // TODO errors
         }
 
-        // TODO will this stack up if run multiple times? (I think it will get cleared?)
-        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        var listener = function(request, sender, sendResponse) {
             if (request.msg === 'capture') {
                 progress(request.complete);
                 capture(request, screenshots, sendResponse, splitnotifier);
@@ -260,7 +259,9 @@ window.CaptureAPI = (function() {
                 errback('internal error');
                 return false;
             }
-        });
+        }
+        // TODO will this stack up if run multiple times? (I think it will get cleared?)
+        chrome.runtime.onMessage.addListener(listener);
 
         chrome.tabs.executeScript(tab.id, {file: 'page.js'}, function() {
             if (timedOut) {
@@ -271,6 +272,7 @@ window.CaptureAPI = (function() {
                 progress(0);
 
                 initiateCapture(tab, function() {
+                    chrome.runtime.onMessage.removeListener(listener);
                     callback(getBlobs(screenshots));
                 });
             }
